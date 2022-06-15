@@ -100,8 +100,6 @@ function f( s ) {
 
 		programs[ p.__uuid ] = el;
 
-		// logMsg( 'addProgram', p.__uuid );
-		console.log('add promgram', p.__uuid);
 		window.postMessage( { source: 'WebGLShaderEditor', method: 'addProgram', uid: p.__uuid }, '*');
 
 	}
@@ -1145,7 +1143,7 @@ function updateProgramName( i, type, name ) {
 	if( type === WebGLRenderingContext.VERTEX_SHADER ) {
 		i.vSName = name;
 	}
-	if( type === GLRenderingContext.FRAGMENT_SHADER ) {
+	if( type === WebGLRenderingContext.FRAGMENT_SHADER ) {
 		i.fSName = name;
 	}
 
