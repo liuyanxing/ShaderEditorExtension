@@ -1,7 +1,7 @@
 function f( s ) {
 
 //			window.postMessage( { method: 'open', arguments: arguments }, '*');
-
+	console.log('inject to page success');
 	var settings = {
 		monitorTextures: false
 	};
@@ -98,7 +98,8 @@ function f( s ) {
 
 		programs[ p.__uuid ] = el;
 
-		//logMsg( 'addProgram', p.__uuid );
+		// logMsg( 'addProgram', p.__uuid );
+		console.log('add promgram', p.__uuid);
 		window.postMessage( { source: 'WebGLShaderEditor', method: 'addProgram', uid: p.__uuid }, '*');
 
 	}
@@ -1192,6 +1193,7 @@ backgroundPageConnection.onMessage.addListener( function( msg ) {
 			waiting.style.display = 'flex';
 			logMsg( 'inject' );
 			tearDown();
+			// chrome.devtools.inspectedWindow.eval('console.log("olllll")') 
 			logMsg( chrome.devtools.inspectedWindow.eval( '(' + f.toString() + ')({monitorTextures:' + settings.textures + '})' ) ); 
 			break;
 		case 'onCommitted':
@@ -1449,8 +1451,6 @@ function testShader( type, source, code ) {
 
 }
 
-var optimize_glsl = Module.cwrap('optimize_glsl', 'string', ['string', 'number', 'number']);
-
 document.getElementById( 'vs-format' ).addEventListener( 'click', function( e ) {
 
 	var source = vSEditor.getValue();
@@ -1503,32 +1503,6 @@ document.getElementById( 'fs-fullscreen' ).addEventListener( 'click', function( 
 
 	fsPanel.classList.toggle( 'fullscreen' );
 	vsPanel.classList.toggle( 'hide' );
-	e.preventDefault();
-
-} );
-
-document.getElementById( 'vs-optimise' ).addEventListener( 'click', function( e ) {
-
-	logMsg( 'vs optimise' );
-	var source = vSEditor.getValue();
-
-	var res = optimize_glsl( source, 2, true );
-	vSEditor.setValue( res );
-	updateVSCode();
-
-	e.preventDefault();
-
-} );
-
-document.getElementById( 'fs-optimise' ).addEventListener( 'click', function( e ) {
-
-	logMsg( 'fs optimise' );
-	var source = fSEditor.getValue();
-
-	var res = optimize_glsl( source, 2, false );
-	fSEditor.setValue( res );
-	updateFSCode();
-
 	e.preventDefault();
 
 } );

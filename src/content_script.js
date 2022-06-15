@@ -40,5 +40,8 @@ window.addEventListener('message', function(event) {
 		return;
 	}
 
-	chrome.runtime.sendMessage(message);
+	console.log('send messeage from page to background: ', message);
+	if(chrome.runtime?.id){
+		chrome.runtime.sendMessage(message);
+	}
 });
