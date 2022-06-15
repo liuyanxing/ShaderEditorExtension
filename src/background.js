@@ -3,7 +3,7 @@ var connections = {};
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 //  console.log('incoming message from injected script');
- // console.log(request);
+// console.log(request);
 
   // Messages from content scripts should have sender.tab set
   if (sender.tab) {
@@ -11,6 +11,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (tabId in connections) {
       connections[tabId].postMessage(request);
     } else {
+      console.log('tab id: ', tabId, 'connections: ', connections, request);
       console.log("Tab not found in connection list.");
     }
   } else {
@@ -52,6 +53,7 @@ function getSettings( c ) {
 
 }
 
+// panel.js 发起的连接, 打开devtool时发送
 chrome.runtime.onConnect.addListener(function( connection ) {
 
   console.log( 'onConnect', connection );
@@ -117,11 +119,10 @@ chrome.webNavigation.onBeforeNavigate.addListener(function(data)
 
 chrome.webNavigation.onCommitted.addListener(function(data) {
  
-  //console.log("onCommitted: " + data.url + ". Frame: " + data.frameId + ". Tab: " + data.tabId);
- 
   if( connections[ data.tabId ] ) {
     if( data.frameId === 0 ) {
       connections[ data.tabId ].postMessage( { method: 'inject' } );
+      console.log('send inject to devtool: ', data.tabId);
     }
   }
 

@@ -1184,6 +1184,7 @@ function tearDown() {
 }
 
 backgroundPageConnection.onMessage.addListener( function( msg ) {
+	console.log("receive messsage from background: ", msg.method);
 
 	switch( msg.method ) {
 		case 'inject':
