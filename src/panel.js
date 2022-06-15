@@ -1,7 +1,7 @@
 function f( s ) {
 
 //			window.postMessage( { method: 'open', arguments: arguments }, '*');
-	console.log('inject to page success');
+	console.log('inject to page success: ', s);
 	var settings = {
 		monitorTextures: false
 	};
@@ -9,6 +9,8 @@ function f( s ) {
 		logMsg( '>>>' + s.monitorTextures );
 		settings.monitorTextures = s.monitorTextures;
 	}
+
+	var GLRenderingContext = s.monitorWebgl1 ? WebGLRenderingContext : WebGL2RenderingContext;
 
 	function debug() { }
 
@@ -55,7 +57,7 @@ function f( s ) {
 
 	this.references = {};
 	methods.forEach( function( f ) {
-		this.references[ f ] = WebGLRenderingContext.prototype[ f ];
+		this.references[ f ] = GLRenderingContext.prototype[ f ];
 	}.bind ( this ) );
 
 	function _h( f, c ) {
@@ -162,7 +164,7 @@ function f( s ) {
 
 	}
 
-	WebGLRenderingContext.prototype.createProgram = function() {
+	GLRenderingContext.prototype.createProgram = function() {
 	
 		var res = references.createProgram.apply( this, [] );
 		res.__uuid = createUUID();
@@ -173,8 +175,8 @@ function f( s ) {
 
 	};
 
-	WebGLRenderingContext.prototype.createShader = _h( 
-		WebGLRenderingContext.prototype.createShader, 
+	GLRenderingContext.prototype.createShader = _h( 
+		GLRenderingContext.prototype.createShader, 
 		function( res, args ) {
 
 			res.__uuid = createUUID();
@@ -183,8 +185,8 @@ function f( s ) {
 		} 
 	);
 
-	WebGLRenderingContext.prototype.shaderSource = _h( 
-		WebGLRenderingContext.prototype.shaderSource, 
+	GLRenderingContext.prototype.shaderSource = _h( 
+		GLRenderingContext.prototype.shaderSource, 
 		function( res, args ) {
 
 			var s = findShader( args[ 0 ] );
@@ -197,8 +199,8 @@ function f( s ) {
 		} 
 	);
 
-	WebGLRenderingContext.prototype.attachShader = _h( 
-		WebGLRenderingContext.prototype.attachShader, 
+	GLRenderingContext.prototype.attachShader = _h( 
+		GLRenderingContext.prototype.attachShader, 
 		function( res, args ) {
 
 			var p = findProgram( args[ 0 ].__uuid );
@@ -220,7 +222,7 @@ function f( s ) {
 
 	var currentProgram = null;
 
-	WebGLRenderingContext.prototype.useProgram = function( p ) {
+	GLRenderingContext.prototype.useProgram = function( p ) {
 
 		if( p && p.__uuid ) {
 			var program = findOriginalProgram( p.__uuid );
@@ -233,7 +235,7 @@ function f( s ) {
 
 	};
 
-	WebGLRenderingContext.prototype.getUniformLocation = function( program, name ) {
+	GLRenderingContext.prototype.getUniformLocation = function( program, name ) {
 
 		var p = findProgram( program.__uuid );
 
@@ -263,14 +265,14 @@ function f( s ) {
 
 	};
 
-	WebGLRenderingContext.prototype.bindBuffer = function( target, buffer ) {
+	GLRenderingContext.prototype.bindBuffer = function( target, buffer ) {
 
 		//logMsg( 'bindBuffer', target, buffer );
 		return references.bindBuffer.apply( this, [ target, buffer ] );
 
 	}
 
-	WebGLRenderingContext.prototype.getAttribLocation = function( program, name ) {
+	GLRenderingContext.prototype.getAttribLocation = function( program, name ) {
 
 		var p = findProgram( program.__uuid );
 
@@ -299,14 +301,14 @@ function f( s ) {
 
 	}
 
-	WebGLRenderingContext.prototype.getExtension = _h( 
-		WebGLRenderingContext.prototype.getExtension, 
+	GLRenderingContext.prototype.getExtension = _h( 
+		GLRenderingContext.prototype.getExtension, 
 		function( res, args ) {
 			window.postMessage( { source: 'WebGLShaderEditor', method: 'getExtension', extension: args[ 0 ] }, '*' );	
 		}
 	);
 
-	WebGLRenderingContext.prototype.bindAttribLocation = function( program, index, name ) {
+	GLRenderingContext.prototype.bindAttribLocation = function( program, index, name ) {
 
 		var p = findProgram( program.__uuid );
 
@@ -338,7 +340,7 @@ function f( s ) {
 
 	}
 
-	WebGLRenderingContext.prototype.enableVertexAttribArray = function( index ) {
+	GLRenderingContext.prototype.enableVertexAttribArray = function( index ) {
 
 		var program = this.getParameter( this.CURRENT_PROGRAM );
 		if( program ) {
@@ -357,7 +359,7 @@ function f( s ) {
 
 	} 
 
-	WebGLRenderingContext.prototype.vertexAttribPointer = function( index, size, type, normalized, stride, offset ) {
+	GLRenderingContext.prototype.vertexAttribPointer = function( index, size, type, normalized, stride, offset ) {
 
 		var program = this.getParameter( this.CURRENT_PROGRAM );
 		if( program ) {
@@ -388,7 +390,7 @@ function f( s ) {
 
 	};
 
-	WebGLRenderingContext.prototype.createTexture = function() {
+	GLRenderingContext.prototype.createTexture = function() {
 
 		var res = references.createTexture.apply( this, [] );
 
@@ -420,7 +422,7 @@ function f( s ) {
 
 	var currentBoundTexture = null;
 
-	WebGLRenderingContext.prototype.bindTexture = function() {
+	GLRenderingContext.prototype.bindTexture = function() {
 
 		var res = references.bindTexture.apply( this, arguments );
 
@@ -477,7 +479,7 @@ function f( s ) {
 
 	// https://gist.github.com/jussi-kalliokoski/3138956
 
-	WebGLRenderingContext.prototype.texImage2D = function() {
+	GLRenderingContext.prototype.texImage2D = function() {
 
 		var res = references.texImage2D.apply( this, arguments );
 
@@ -546,7 +548,7 @@ function f( s ) {
 
 	};
 
-	WebGLRenderingContext.prototype.texParameteri = function() {
+	GLRenderingContext.prototype.texParameteri = function() {
 
 		if( settings.monitorTextures ) {
 			var t = textures[ currentBoundTexture.__uuid ];
@@ -557,7 +559,7 @@ function f( s ) {
 
 	};
 
-	WebGLRenderingContext.prototype.texParameterf = function() {
+	GLRenderingContext.prototype.texParameterf = function() {
 
 		if( settings.monitorTextures ) {
 			var t = textures[ currentBoundTexture.__uuid ];
@@ -568,7 +570,7 @@ function f( s ) {
 
 	};
 
-	WebGLRenderingContext.prototype.texSubImage2D = function() {
+	GLRenderingContext.prototype.texSubImage2D = function() {
 		
 		logMsg( 'TEXTURE texSubImage2D' );
 	
@@ -586,10 +588,10 @@ function f( s ) {
 
 	methods.forEach( function( f ) {
 
-		references[ f ] = WebGLRenderingContext.prototype[ f ];
+		references[ f ] = GLRenderingContext.prototype[ f ];
 		var count = 0;
 
-		WebGLRenderingContext.prototype[ f ] = function() {
+		GLRenderingContext.prototype[ f ] = function() {
 
 			var args = arguments;
 			if( args[ 0 ] === null || args[ 0 ] === undefined ) return;
@@ -1026,7 +1028,8 @@ var options = {
 var settings = {
 	highlight: true,
 	tmpDisableHighlight: false,
-	textures: false
+	textures: false,
+	monitorWebgl1: false
 }
 
 function readSettings() {
@@ -1142,7 +1145,7 @@ function updateProgramName( i, type, name ) {
 	if( type === WebGLRenderingContext.VERTEX_SHADER ) {
 		i.vSName = name;
 	}
-	if( type === WebGLRenderingContext.FRAGMENT_SHADER ) {
+	if( type === GLRenderingContext.FRAGMENT_SHADER ) {
 		i.fSName = name;
 	}
 
@@ -1181,7 +1184,6 @@ function tearDown() {
 	document.getElementById( 'textures' ).style.display = settings.textures?'block':'none';	
 	document.getElementById( 'monitorTextures' ).checked = settings.textures;
 	document.getElementById( 'highlightShaders' ).checked = settings.highlight;
-
 }
 
 backgroundPageConnection.onMessage.addListener( function( msg ) {
@@ -1193,8 +1195,7 @@ backgroundPageConnection.onMessage.addListener( function( msg ) {
 			waiting.style.display = 'flex';
 			logMsg( 'inject' );
 			tearDown();
-			// chrome.devtools.inspectedWindow.eval('console.log("olllll")') 
-			logMsg( chrome.devtools.inspectedWindow.eval( '(' + f.toString() + ')({monitorTextures:' + settings.textures + '})' ) ); 
+			logMsg( chrome.devtools.inspectedWindow.eval( '(' + f.toString() + ')(' + JSON.stringify(settings) + ')' ));
 			break;
 		case 'onCommitted':
 			//chrome.devtools.inspectedWindow.eval( '(' + f.toString() + ')()' ); // this gets appended AFTER the page
@@ -1360,7 +1361,8 @@ function scheduleUpdateFS() {
 vSEditor.on( 'keyup', scheduleUpdateVS );
 fSEditor.on( 'keyup', scheduleUpdateFS );
 
-var gl = document.createElement( 'canvas' ).getContext( 'webgl' );
+var glVerison = settings.monitorWebgl1 ? 'webgl' : 'webgl2';
+var gl = document.createElement( 'canvas' ).getContext(glVerison);
 
 function testShader( type, source, code ) {
 
@@ -1536,6 +1538,14 @@ document.getElementById( 'monitorTextures' ).addEventListener( 'change', functio
 	settings.textures = this.checked;
 
 	saveSettings();
+
+	e.preventDefault();
+
+} );
+
+document.getElementById( 'monitorWebgl1' ).addEventListener( 'change', function( e ) {
+
+	settings.monitorWebgl1 = this.checked;
 
 	e.preventDefault();
 
