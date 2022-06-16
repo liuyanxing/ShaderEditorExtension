@@ -1,7 +1,6 @@
 function f( s ) {
 
 //			window.postMessage( { method: 'open', arguments: arguments }, '*');
-	console.log('inject to page success: ', s);
 	var settings = {
 		monitorTextures: false
 	};
@@ -9,6 +8,8 @@ function f( s ) {
 		logMsg( '>>>' + s.monitorTextures );
 		settings.monitorTextures = s.monitorTextures;
 	}
+
+	var replaceShaders = s.replaceShaders || [];
 
 	var GLRenderingContext = s.monitorWebgl1 ? WebGLRenderingContext : WebGL2RenderingContext;
 
@@ -191,11 +192,29 @@ function f( s ) {
 			s.source = args[ 1 ];
 			s.name = extractShaderName( s.source );
 
-			//debugger;
+			console.log( 'shaderSource', s.source );
+			// debugger;
 			//logMsg( 'shaderSource', s.source );
 
 		} 
 	);
+
+	// GLRenderingContext.prototype.shaderSource = function () {
+	// 	var shader = arguments[ 1 ];
+	// 	var targetShader = replaceShaders.find( function( s ) {
+	// 		if (s.original.includes(shader)) {
+	// 			return true;
+	// 		}
+	// 	})
+	// 	if (targetShader) {
+	// 		arguments[1] = s.replace;
+	// 		shader = s.replace;
+	// 	}
+	// 	references['shaderSource'].apply( this, arguments );
+	// 	var s = findShader( arguments[0] );
+	// 	s.source = shader;
+	// 	s.name = extractShaderName( s.source );
+	// };
 
 	GLRenderingContext.prototype.attachShader = _h( 
 		GLRenderingContext.prototype.attachShader, 
@@ -1030,6 +1049,8 @@ var settings = {
 	monitorWebgl1: false
 }
 
+var replaceShaders = [];
+
 function readSettings() {
 
 	backgroundPageConnection.postMessage( {
@@ -1044,6 +1065,16 @@ function saveSettings() {
 	backgroundPageConnection.postMessage( {
 		name: 'saveSettings',
 		settings: settings,
+		tabId: chrome.devtools.inspectedWindow.tabId
+	} );
+
+}
+
+function saveReplaceShaders() {
+
+	backgroundPageConnection.postMessage( {
+		name: 'saveReplaceShaders',
+		shaders: replaceShaders,
 		tabId: chrome.devtools.inspectedWindow.tabId
 	} );
 
@@ -1184,16 +1215,39 @@ function tearDown() {
 	document.getElementById( 'highlightShaders' ).checked = settings.highlight;
 }
 
-backgroundPageConnection.onMessage.addListener( function( msg ) {
-	console.log("receive messsage from background: ", msg.method);
+function updateReplaceShaders() {
+	var shaderContainer = document.getElementById( 'replaceShanderContainers' );
+	while( shaderContainer.firstChild ) shaderContainer.removeChild( shaderContainer.firstChild );
+	console.log('replaceShaders', replaceShaders);
+	replaceShaders.forEach( function( shader) {
+		addReplaceShader( shader.original, shader.replace );
+	})
+}
 
+function addReplaceShader(originalShader, replacementShader) {
+	var shaderContainer = document.createElement( 'div' );
+	var originalShaderInput = document.createElement( 'textarea' );
+	var replaceShaderInput = document.createElement( 'textarea' );
+	shaderContainer.appendChild( originalShaderInput );
+	shaderContainer.appendChild( replaceShaderInput );
+	var replaceShaderContainer = document.getElementById( 'replaceShanderContainers' )	
+	replaceShaderContainer.appendChild(shaderContainer);
+
+	shaderContainer.className = 'shader-container';
+	if (originalShader && replacementShader) {
+		originalShaderInput.value = originalShader;
+		replaceShaderInput.value = replacementShader;
+	}
+}
+
+backgroundPageConnection.onMessage.addListener( function( msg ) {
 	switch( msg.method ) {
 		case 'inject':
 			info.style.display = 'none';
 			waiting.style.display = 'flex';
 			logMsg( 'inject' );
 			tearDown();
-			logMsg( chrome.devtools.inspectedWindow.eval( '(' + f.toString() + ')(' + JSON.stringify(settings) + ')' ));
+			logMsg( chrome.devtools.inspectedWindow.eval( '(' + f.toString() + ')(' + JSON.stringify({ ...settings, replaceShaders}) + ')' ));
 			break;
 		case 'onCommitted':
 			//chrome.devtools.inspectedWindow.eval( '(' + f.toString() + ')()' ); // this gets appended AFTER the page
@@ -1218,6 +1272,13 @@ backgroundPageConnection.onMessage.addListener( function( msg ) {
 			settings = msg.settings;
 			logMsg( JSON.stringify( settings ) );
 			break;
+		case 'replaceShaders':
+			if (!Array.isArray(msg.replaceShaders)) {
+				console.log('replaceShaders in init', msg.replaceShaders);
+				msg.replaceShaders = [];
+			}
+			replaceShaders = msg.replaceShaders;
+			updateReplaceShaders();
 		case 'init':
 			logMsg( 'init' );
 			break;
@@ -1548,6 +1609,25 @@ document.getElementById( 'monitorWebgl1' ).addEventListener( 'change', function(
 	e.preventDefault();
 
 } );
+
+document.getElementById('addReplaceShader').addEventListener( 'click', function( e ) {
+	addReplaceShader();
+} );
+
+document.getElementById('saveReplaceShader').addEventListener( 'click', function( e ) {
+	var replaceShaderContainer = document.getElementById( 'replaceShanderContainers' )	
+	var children = replaceShaderContainer.children;
+  Array.from(children).forEach( function( child ) {
+		var originalShaderInput = child.children[0];
+		var replaceShaderInput = child.children[1];
+		var originalShader = originalShaderInput.value;
+		var replaceShader = replaceShaderInput.value;
+		if( originalShader.length > 0 && replaceShader.length > 0 ) {
+			replaceShaders.push( { original: originalShader, replace: replaceShader } );
+		}
+	} );
+	saveReplaceShaders();
+});
 
 window.addEventListener( 'resize', onWindowResize );
 

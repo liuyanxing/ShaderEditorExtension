@@ -53,6 +53,13 @@ function getSettings( c ) {
 
 }
 
+function getReplaceShaders(cb) {
+  chrome.storage.sync.get('replaceShaders', function( obj ) {
+    var replaceShaders = obj.replaceShaders ? obj.replaceShaders : [];
+    cb(replaceShaders);
+  })
+}
+
 // panel.js 发起的连接, 打开devtool时发送
 chrome.runtime.onConnect.addListener(function( connection ) {
 
@@ -71,6 +78,9 @@ chrome.runtime.onConnect.addListener(function( connection ) {
         connections[ message.tabId ].postMessage( { method: 'settings', settings: settings } );
         connections[ message.tabId ].postMessage( { method: 'loaded' } );
       } );
+      getReplaceShaders( function( shaders ) {
+        connections[ message.tabId ].postMessage( { method: 'replaceShaders', replaceShaders: shaders } );
+      } );
     }
 
     if( message.name === 'readSettings' ) {
@@ -83,12 +93,16 @@ chrome.runtime.onConnect.addListener(function( connection ) {
     }
     
     if( message.name === 'saveSettings' ) {
-      console.log( 'save settings' );
       chrome.storage.sync.set( { 'settings': message.settings },  function() {
           console.log('Settings saved');
         });
     }
 
+    if (message.name === 'saveReplaceShaders') {
+      chrome.storage.sync.set( { 'replaceShaders': message.shaders },  function() {
+          console.log('replace shader saved');
+        });
+    }
   }
 
   connection.onMessage.addListener( listener );
