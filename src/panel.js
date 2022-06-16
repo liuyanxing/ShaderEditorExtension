@@ -1,4 +1,5 @@
 function f( s ) {
+	console.log('inject shader editor');
 
 //			window.postMessage( { method: 'open', arguments: arguments }, '*');
 	var settings = {
@@ -184,37 +185,37 @@ function f( s ) {
 		} 
 	);
 
-	GLRenderingContext.prototype.shaderSource = _h( 
-		GLRenderingContext.prototype.shaderSource, 
-		function( res, args ) {
+	// GLRenderingContext.prototype.shaderSource = _h( 
+	// 	GLRenderingContext.prototype.shaderSource, 
+	// 	function( res, args ) {
 
-			var s = findShader( args[ 0 ] );
-			s.source = args[ 1 ];
-			s.name = extractShaderName( s.source );
+	// 		var s = findShader( args[ 0 ] );
+	// 		s.source = args[ 1 ];
+	// 		s.name = extractShaderName( s.source );
 
-			console.log( 'shaderSource', s.source );
-			// debugger;
-			//logMsg( 'shaderSource', s.source );
+	// 		console.log( 'shaderSource', s.source );
+	// 		// debugger;
+	// 		//logMsg( 'shaderSource', s.source );
 
-		} 
-	);
+	// 	} 
+	// );
 
-	// GLRenderingContext.prototype.shaderSource = function () {
-	// 	var shader = arguments[ 1 ];
-	// 	var targetShader = replaceShaders.find( function( s ) {
-	// 		if (s.original.includes(shader)) {
-	// 			return true;
-	// 		}
-	// 	})
-	// 	if (targetShader) {
-	// 		arguments[1] = s.replace;
-	// 		shader = s.replace;
-	// 	}
-	// 	references['shaderSource'].apply( this, arguments );
-	// 	var s = findShader( arguments[0] );
-	// 	s.source = shader;
-	// 	s.name = extractShaderName( s.source );
-	// };
+	GLRenderingContext.prototype.shaderSource = function () {
+		var shader = arguments[ 1 ];
+		var targetShader = replaceShaders.find( function( s ) {
+			if (s.original.includes(shader)) {
+				return true;
+			}
+		})
+		if (targetShader) {
+			shader = targetShader.replace;
+			arguments[1] = shader;
+		}
+		references['shaderSource'].apply( this, arguments );
+		var s = findShader( arguments[0] );
+		s.source = shader;
+		s.name = extractShaderName( s.source );
+	};
 
 	GLRenderingContext.prototype.attachShader = _h( 
 		GLRenderingContext.prototype.attachShader, 
@@ -1241,6 +1242,7 @@ function addReplaceShader(originalShader, replacementShader) {
 }
 
 backgroundPageConnection.onMessage.addListener( function( msg ) {
+	console.log('msg from background: ', msg);
 	switch( msg.method ) {
 		case 'inject':
 			info.style.display = 'none';
